@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Document Question Answering System</title>
+<style>
+:root{font-family:Segoe UI,Arial,sans-serif;color:#1b2432;background:#f4f7f6}*{box-sizing:border-box}body{margin:0}
+header{padding:32px max(20px,calc((100% - 1080px)/2));background:linear-gradient(120deg,#0f4c5c,#0d9488);color:white}
+header small{letter-spacing:2px;text-transform:uppercase;color:#ccfbf1}h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}header p{color:#e6fffa;max-width:750px}
+main{max-width:1080px;margin:24px auto;padding:0 18px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.chip{background:#ccfbf1;color:#0f4c5c;padding:6px 12px;border-radius:30px;font-size:12px;font-weight:bold}
+.grid{display:grid;grid-template-columns:310px 1fr;gap:18px}.card{background:white;border:1px solid #d9e4e2;border-radius:15px;padding:19px;margin-bottom:17px;box-shadow:0 7px 20px #0f4c5c0d}
+h2{font-size:18px;margin:0 0 10px}h3{font-size:14px}.muted{color:#5c6b73;font-size:13px}input[type=file],input[type=text]{width:100%;padding:12px;border:1px solid #cbd8d6;border-radius:9px;font:inherit}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer;margin:7px 5px 0 0}.primary{background:#0d9488;color:white}.secondary{background:#e6f4f1;color:#0f4c5c}
+.status,.answer{padding:13px;border-radius:10px;background:#f2f8f7;border:1px solid #d9e4e2;margin-top:12px;font-size:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:17px}.stat{background:white;border:1px solid #d9e4e2;border-radius:12px;padding:12px}.stat b{display:block;font-size:23px;color:#0f4c5c}.stat span{font-size:12px;color:#5c6b73}
+.ask{display:flex;gap:8px}.ask input{flex:1;min-width:0}.examples{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.examples button{font-size:12px;background:#f0f6f5;color:#274247;border:1px solid #d4e2e0}
+ol{padding-left:20px}.facts{max-height:230px;overflow:auto;font-size:13px;color:#3f5259}.footer{text-align:center;color:#5c6b73;font-size:12px;padding:15px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}@media(max-width:450px){.ask{flex-direction:column}.stats{gap:5px}.stat{padding:8px}}
+</style></head><body>
+<header><small>Traditional Artificial Intelligence Techniques</small><h1>AI Document Question Answering System</h1>
+<p>Upload a text document and ask questions about it. The system builds a knowledge base, matches keywords, ranks relevant facts and returns the best matching sentence.</p></header>
+<main><div class="chips"><span class="chip">Student: Asutosh</span><span class="chip">Register No: 25ETAI410022</span><span class="chip">Course: AID201A</span></div>
+<div class="grid"><aside class="card"><h2>1. Document input</h2><p class="muted">Upload a .txt file or use the included sample document.</p>
+<input id="file" type="file" accept=".txt,text/plain"><br><button class="primary" id="load">Load document</button><button class="secondary" id="sample">Use sample</button>
+<div class="status" id="status">Sample document is ready.</div><h3>Knowledge base facts</h3><div class="muted" id="count">7 facts loaded.</div><ol class="facts" id="facts"></ol>
+<button class="secondary" id="download">Download knowledge_base.json</button></aside>
+<section><div class="stats"><div class="stat"><b id="nFacts">7</b><span>Facts stored</span></div><div class="stat"><b id="nWords">0</b><span>Unique keywords</span></div><div class="stat"><b id="nQueries">0</b><span>Questions asked</span></div></div>
+<div class="card"><h2>2. Ask a question</h2><p class="muted">Questions are answered only from the loaded document.</p><div class="ask"><input id="question" placeholder="Example: What is an intelligent agent?"><button class="primary" id="ask">Get answer</button></div>
+<div class="examples"><button>What is Artificial Intelligence?</button><button>What is a knowledge base?</button><button>What does BFS use?</button><button>What is a heuristic?</button><button>What is the formula used in A* search?</button></div>
+<div class="answer"><h3 id="type">Answer will appear here</h3><div id="answer" class="muted">Load a document and enter a question.</div><p id="meta" class="muted"></p></div></div>
+<div class="card"><h2>3. System evaluation</h2><p class="muted">Test the system with predefined questions.</p><button class="secondary" id="eval">Evaluate system</button><div class="status" id="evaluation">Evaluation has not been run.</div></div>
+<div class="card"><h2>How it works</h2><ol class="muted"><li>Reads a plain-text document and splits it into sentences.</li><li>Stores sentences as facts in a knowledge base.</li><li>Removes common stop words from each question.</li><li>Uses keyword matching and IDF-style scoring to rank facts.</li><li>Returns the highest-ranked sentence and classifies the question type.</li></ol><p class="muted"><b>Project scope:</b> Traditional rule-based retrieval only. No LLM, embeddings, external API or RAG is used.</p></div></section></div>
+<div class="footer">AI-Based Document Question Answering System · AID201A</div></main>
+<script>
+const SAMPLE=`Artificial Intelligence (AI) is the field of building machines that can perform tasks requiring human-like intelligence.
+An intelligent agent perceives its environment through sensors and acts upon that environment through actuators.
+A knowledge base stores facts about a domain in a structured form.
+Breadth First Search (BFS) explores nodes level by level and uses a queue.
+Depth First Search (DFS) explores a path as deeply as possible before backtracking and uses a stack.
+A heuristic is an estimate that helps a search algorithm choose a promising path.
+A* search uses the evaluation function f(n) = g(n) + h(n).`;
+const STOP=new Set("what is are the a an of in on and does do how which explain define tell me about use uses used by to for it with from can that this was were".split(" "));
+let facts=[],queries=0;
+const el=id=>document.getElementById(id);
+function words(s){return(s.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(w=>!STOP.has(w)&&w.length>1)}
+function split(s){return s.replace(/\s+/g," ").split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Boolean)}
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function load(text,name){facts=split(text).map((statement,i)=>({id:i+1,statement,words:[...new Set(words(statement))]}));queries=0;el("nFacts").textContent=facts.length;el("nWords").textContent=new Set(facts.flatMap(f=>f.words)).size;el("nQueries").textContent=0;el("count").textContent=facts.length+" facts from "+name;el("facts").innerHTML=facts.map(f=>"<li>"+esc(f.statement)+"</li>").join("");el("status").textContent="Knowledge base created successfully from "+name+"."}
+function classify(q){q=q.toLowerCase();if(q.startsWith("who"))return"Person-related question";if(q.startsWith("when"))return"Time-related question";if(q.startsWith("where"))return"Location-related question";if(q.startsWith("why"))return"Reason-related question";if(q.startsWith("how"))return"Process-related question";if(q.startsWith("what")||q.startsWith("define"))return"Definition-related question";return"General question"}
+function find(q){let ts=[...new Set(words(q))];if(!ts.length)return null;let ranked=facts.map(f=>{let score=0;ts.forEach(w=>{if(f.words.includes(w)){let df=facts.filter(x=>x.words.includes(w)).length;score+=Math.log(1+facts.length/(1+df))}});return{f,score}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);return ranked[0]||null}
+function ask(){let q=el("question").value.trim();if(!q){el("answer").textContent="Please enter a question.";return}queries++;el("nQueries").textContent=queries;let r=find(q);el("type").textContent=classify(q);el("answer").textContent=r?r.f.statement:"Answer not found in the document.";el("meta").textContent=r?"Matched fact #"+r.f.id+" · Relevance score: "+r.score.toFixed(3):"No matching keywords were found."}
+el("sample").onclick=()=>load(SAMPLE,"sample document");
+el("load").onclick=async()=>{let f=el("file").files[0];if(!f){el("status").textContent="Please choose a .txt file.";return}load(await f.text(),f.name)};
+el("ask").onclick=ask;el("question").onkeydown=e=>{if(e.key==="Enter")ask()};
+document.querySelectorAll(".examples button").forEach(b=>b.onclick=()=>{el("question").value=b.textContent;ask()});
+el("download").onclick=()=>{let blob=new Blob([JSON.stringify(facts.map(({id,statement})=>({id,statement})),null,2)],{type:"application/json"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="knowledge_base.json";a.click();URL.revokeObjectURL(a.href)};
+el("eval").onclick=()=>{let tests=["What is Artificial Intelligence?","What is a knowledge base?","What is an intelligent agent?","What does BFS use?"];let ok=0;let rows=tests.map(q=>{let r=find(q);if(r)ok++;return q+" → "+(r?r.f.statement:"Not found")});el("evaluation").innerHTML="<b>Matched: "+ok+"/"+tests.length+" · Match rate: "+(100*ok/tests.length).toFixed(1)+"%</b><br><br>"+rows.map(esc).join("<br>")};
+load(SAMPLE,"sample document");
+</script></body></html>
